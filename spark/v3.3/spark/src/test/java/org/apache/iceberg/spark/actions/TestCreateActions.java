@@ -988,7 +988,7 @@ public class TestCreateActions extends SparkCatalogTestBase {
           spark
               .sessionState()
               .catalog()
-              .listPartitions(sourceTable.identifier(), Option.apply(null));
+              .listPartitions(sourceTable.identifier(), Option.apply(null), 0);
       uris =
           JavaConverters.seqAsJavaList(catalogTablePartitionSeq).stream()
               .map(CatalogTablePartition::location)

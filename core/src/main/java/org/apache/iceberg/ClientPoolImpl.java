@@ -122,7 +122,9 @@ public abstract class ClientPoolImpl<C, E extends Exception>
           if (!clients.isEmpty()) {
             return clients.removeFirst();
           } else if (currentSize < poolSize) {
+            LOG.warn("Iceberg!!!: getting new client");
             C client = newClient();
+            LOG.warn("Iceberg!!!: getting new client done");
             currentSize += 1;
             return client;
           }
@@ -136,6 +138,7 @@ public abstract class ClientPoolImpl<C, E extends Exception>
   }
 
   private void release(C client) {
+    LOG.warn("Iceberg!!!: release client: " + client);
     synchronized (this) {
       clients.addFirst(client);
     }

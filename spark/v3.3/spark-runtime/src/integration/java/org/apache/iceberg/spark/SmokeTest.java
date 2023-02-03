@@ -19,6 +19,8 @@
 package org.apache.iceberg.spark;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.Map;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.catalog.TableIdentifier;
@@ -32,6 +34,24 @@ public class SmokeTest extends SparkExtensionsTestBase {
 
   public SmokeTest(String catalogName, String implementation, Map<String, String> config) {
     super(catalogName, implementation, config);
+
+    locate(org.eclipse.jetty.servlet.ServletHandler.class);
+  }
+
+  public static void locate(Class<?> clazz) {
+    try {
+      ClassLoader cl = clazz.getClassLoader();
+      String classAsResource = clazz.getName().replace('.', '/') + ".class";
+      Enumeration<URL> urls = cl.getResources(classAsResource);
+      // System.out.printf("===========Looking for: %s%n", classAsResource);
+      while (urls.hasMoreElements()) {
+        URL url = urls.nextElement();
+        // System.out.printf("===========Found: %s%n", url.toExternalForm());
+      }
+    } catch (Throwable t) {
+      // System.out.printf("==========Whoops: cannot locate: %s%n", clazz);
+      // t.printStackTrace();
+    }
   }
 
   @Before

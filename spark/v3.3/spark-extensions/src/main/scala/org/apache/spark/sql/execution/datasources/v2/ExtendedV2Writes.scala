@@ -53,13 +53,14 @@ object ExtendedV2Writes extends Rule[LogicalPlan] with PredicateHelper {
   import DataSourceV2Implicits._
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan transformDown {
-    case a @ AppendData(r: DataSourceV2Relation, query, options, _, None) if isIcebergRelation(r) =>
+    case a @ AppendData(r: DataSourceV2Relation, query, options, _, None, _)
+        if isIcebergRelation(r) =>
       val writeBuilder = newWriteBuilder(r.table, query.schema, options)
       val write = writeBuilder.build()
       val newQuery = ExtendedDistributionAndOrderingUtils.prepareQuery(write, query, conf)
       a.copy(write = Some(write), query = newQuery)
 
-    case o @ OverwriteByExpression(r: DataSourceV2Relation, deleteExpr, query, options, _, None)
+    case o @ OverwriteByExpression(r: DataSourceV2Relation, deleteExpr, query, options, _, None, _)
         if isIcebergRelation(r) =>
       // fail if any filter cannot be converted. correctness depends on removing all matching data.
       val filters = splitConjunctivePredicates(deleteExpr).flatMap { pred =>

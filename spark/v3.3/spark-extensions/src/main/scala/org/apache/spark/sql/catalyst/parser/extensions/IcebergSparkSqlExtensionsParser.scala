@@ -85,6 +85,10 @@ class IcebergSparkSqlExtensionsParser(delegate: ParserInterface) extends ParserI
     delegate.parseExpression(sqlText)
   }
 
+  override def parseExpressionWithoutQueryContext(sqlText: String): Expression = {
+    throw new UnsupportedOperationException()
+  }
+
   /**
    * Parse a string to a TableIdentifier.
    */

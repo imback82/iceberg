@@ -75,8 +75,6 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.catalyst.TableIdentifier;
-import org.apache.spark.sql.catalyst.analysis.NoSuchDatabaseException;
-import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute;
 import org.apache.spark.sql.catalyst.catalog.CatalogTable;
 import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition;
@@ -185,16 +183,13 @@ public class SparkTableUtil {
         scalaPartitionFilter = Option.empty();
       }
       Seq<CatalogTablePartition> partitions =
-          catalog.listPartitions(tableIdent, scalaPartitionFilter).toIndexedSeq();
+          catalog.listPartitions(tableIdent, scalaPartitionFilter, 0).toIndexedSeq();
       return JavaConverters.seqAsJavaListConverter(partitions).asJava().stream()
           .map(catalogPartition -> toSparkPartition(catalogPartition, catalogTable))
           .collect(Collectors.toList());
-    } catch (NoSuchDatabaseException e) {
+    } catch (Exception e) {
       throw SparkExceptionUtil.toUncheckedException(
           e, "Unknown table: %s. Database not found in catalog.", tableIdent);
-    } catch (NoSuchTableException e) {
-      throw SparkExceptionUtil.toUncheckedException(
-          e, "Unknown table: %s. Table not found in catalog.", tableIdent);
     }
   }
 
@@ -259,12 +254,9 @@ public class SparkTableUtil {
       return JavaConverters.seqAsJavaListConverter(partitions).asJava().stream()
           .map(catalogPartition -> toSparkPartition(catalogPartition, catalogTable))
           .collect(Collectors.toList());
-    } catch (NoSuchDatabaseException e) {
+    } catch (Exception e) {
       throw SparkExceptionUtil.toUncheckedException(
           e, "Unknown table: %s. Database not found in catalog.", tableIdent);
-    } catch (NoSuchTableException e) {
-      throw SparkExceptionUtil.toUncheckedException(
-          e, "Unknown table: %s. Table not found in catalog.", tableIdent);
     }
   }
 
@@ -545,12 +537,9 @@ public class SparkTableUtil {
       AppendFiles append = targetTable.newAppend();
       files.forEach(append::appendFile);
       append.commit();
-    } catch (NoSuchDatabaseException e) {
+    } catch (Exception e) {
       throw SparkExceptionUtil.toUncheckedException(
           e, "Unknown table: %s. Database not found in catalog.", sourceTableIdent);
-    } catch (NoSuchTableException e) {
-      throw SparkExceptionUtil.toUncheckedException(
-          e, "Unknown table: %s. Table not found in catalog.", sourceTableIdent);
     }
   }
 

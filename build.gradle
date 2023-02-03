@@ -262,6 +262,16 @@ project(':iceberg-common') {
 }
 
 project(':iceberg-core') {
+  apply plugin: 'scala'
+  apply plugin: 'com.github.alisiikh.scalastyle'
+
+  sourceSets {
+    main {
+      scala.srcDirs = ['src/main/scala', 'src/main/java']
+      java.srcDirs = []
+    }
+  }
+
   test {
     useJUnitPlatform()
   }
@@ -275,6 +285,16 @@ project(':iceberg-core') {
     implementation("org.apache.avro:avro") {
       exclude group: 'org.tukaani' // xz compression is not supported
     }
+
+    compileOnly 'org.apache.thrift:libthrift:0.12.0'
+    compileOnly files("/Users/terry.kim/jars/spark/scala-library-2.12.14.jar")
+    compileOnly files("/Users/terry.kim/jars/databricks-hive/----ws_3_3--maven-trees--hive-metastore-databricks-log4j2--org.apache.hive--hive-common--org.apache.hive__hive-common__0.13.1-databricks-8.jar")
+    compileOnly files("/Users/terry.kim/jars/databricks-hive/----ws_3_3--maven-trees--hive-metastore-databricks-log4j2--org.apache.hive--hive-metastore--org.apache.hive__hive-metastore__0.13.1-databricks-8.jar")
+    compileOnly files("/Users/terry.kim/jars/databricks-hive/----ws_3_3--maven-trees--hive-metastore-databricks-log4j2--org.apache.hive--hive-serde--org.apache.hive__hive-serde__0.13.1-databricks-8.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-core_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-tags_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-sql_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-hive_2.12-3.3.1-SNAPSHOT.jar")
 
     implementation 'io.airlift:aircompressor'
     implementation 'org.apache.httpcomponents.client5:httpclient5'
@@ -456,6 +476,16 @@ project(':iceberg-gcp') {
 }
 
 project(':iceberg-hive-metastore') {
+  apply plugin: 'scala'
+  apply plugin: 'com.github.alisiikh.scalastyle'
+
+  sourceSets {
+    main {
+      scala.srcDirs = ['src/main/scala', 'src/main/java']
+      java.srcDirs = []
+    }
+  }
+
   dependencies {
     implementation project(path: ':iceberg-bundled-guava', configuration: 'shadow')
     implementation project(':iceberg-core')
@@ -466,21 +496,30 @@ project(':iceberg-hive-metastore') {
 
     compileOnly "org.apache.avro:avro"
 
-    compileOnly("org.apache.hive:hive-metastore") {
-      exclude group: 'org.apache.avro', module: 'avro'
-      exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-      exclude group: 'org.pentaho' // missing dependency
-      exclude group: 'org.apache.hbase'
-      exclude group: 'org.apache.logging.log4j'
-      exclude group: 'co.cask.tephra'
-      exclude group: 'com.google.code.findbugs', module: 'jsr305'
-      exclude group: 'org.eclipse.jetty.aggregate', module: 'jetty-all'
-      exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
-      exclude group: 'org.apache.parquet', module: 'parquet-hadoop-bundle'
-      exclude group: 'com.tdunning', module: 'json'
-      exclude group: 'javax.transaction', module: 'transaction-api'
-      exclude group: 'com.zaxxer', module: 'HikariCP'
-    }
+    compileOnly 'org.apache.thrift:libthrift:0.12.0'
+    compileOnly files("/Users/terry.kim/jars/spark/scala-library-2.12.14.jar")
+    compileOnly files("/Users/terry.kim/jars/databricks-hive/----ws_3_3--maven-trees--hive-metastore-databricks-log4j2--org.apache.hive--hive-common--org.apache.hive__hive-common__0.13.1-databricks-8.jar")
+    compileOnly files("/Users/terry.kim/jars/databricks-hive/----ws_3_3--maven-trees--hive-metastore-databricks-log4j2--org.apache.hive--hive-metastore--org.apache.hive__hive-metastore__0.13.1-databricks-8.jar")
+    compileOnly files("/Users/terry.kim/jars/databricks-hive/----ws_3_3--maven-trees--hive-metastore-databricks-log4j2--org.apache.hive--hive-serde--org.apache.hive__hive-serde__0.13.1-databricks-8.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-core_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-tags_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-sql_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-hive_2.12-3.3.1-SNAPSHOT.jar")
+//            ("org.apache.hive:hive-metastore") {
+//      exclude group: 'org.apache.avro', module: 'avro'
+//      exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+//      exclude group: 'org.pentaho' // missing dependency
+//      exclude group: 'org.apache.hbase'
+//      exclude group: 'org.apache.logging.log4j'
+//      exclude group: 'co.cask.tephra'
+//      exclude group: 'com.google.code.findbugs', module: 'jsr305'
+//      exclude group: 'org.eclipse.jetty.aggregate', module: 'jetty-all'
+//      exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
+//      exclude group: 'org.apache.parquet', module: 'parquet-hadoop-bundle'
+//      exclude group: 'com.tdunning', module: 'json'
+//      exclude group: 'javax.transaction', module: 'transaction-api'
+//      exclude group: 'com.zaxxer', module: 'HikariCP'
+//    }
 
     // By default, hive-exec is a fat/uber jar and it exports a guava library
     // that's really old. We use the core classifier to be able to override our guava
@@ -498,26 +537,31 @@ project(':iceberg-hive-metastore') {
       exclude group: 'com.google.code.findbugs', module: 'jsr305'
     }
 
-    testImplementation("org.apache.hive:hive-metastore") {
-      exclude group: 'org.apache.avro', module: 'avro'
-      exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-      exclude group: 'org.pentaho' // missing dependency
-      exclude group: 'org.apache.hbase'
-      exclude group: 'org.apache.logging.log4j'
-      exclude group: 'co.cask.tephra'
-      exclude group: 'com.google.code.findbugs', module: 'jsr305'
-      exclude group: 'org.eclipse.jetty.aggregate', module: 'jetty-all'
-      exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
-      exclude group: 'org.apache.parquet', module: 'parquet-hadoop-bundle'
-      exclude group: 'com.tdunning', module: 'json'
-      exclude group: 'javax.transaction', module: 'transaction-api'
-      exclude group: 'com.zaxxer', module: 'HikariCP'
-    }
+    testImplementation 'org.apache.thrift:libfb303:0.9.3'
+    testImplementation files("/Users/terry.kim/jars/databricks-hive/----ws_3_3--maven-trees--hive-metastore-databricks-log4j2--org.apache.hive--hive-metastore--org.apache.hive__hive-metastore__0.13.1-databricks-8.jar")
+    testImplementation files("/Users/terry.kim/jars/spark/org.apache.hive__hive-common__2.3.9.jar")
+//    testImplementation("org.apache.hive:hive-metastore") {
+//      exclude group: 'org.apache.avro', module: 'avro'
+//      exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+//      exclude group: 'org.pentaho' // missing dependency
+//      exclude group: 'org.apache.hbase'
+//      exclude group: 'org.apache.logging.log4j'
+//      exclude group: 'co.cask.tephra'
+//      exclude group: 'com.google.code.findbugs', module: 'jsr305'
+//      exclude group: 'org.eclipse.jetty.aggregate', module: 'jetty-all'
+//      exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
+//      exclude group: 'org.apache.parquet', module: 'parquet-hadoop-bundle'
+//      exclude group: 'com.tdunning', module: 'json'
+//      exclude group: 'javax.transaction', module: 'transaction-api'
+//      exclude group: 'com.zaxxer', module: 'HikariCP'
+//    }
 
-    compileOnly("org.apache.hadoop:hadoop-client") {
-      exclude group: 'org.apache.avro', module: 'avro'
-      exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-    }
+    compileOnly files("/Users/terry.kim/jars/spark/org.apache.hadoop__hadoop-client-api__3.3.2-databricks.jar")
+
+//    compileOnly("org.apache.hadoop:hadoop-client") {
+//      exclude group: 'org.apache.avro', module: 'avro'
+//      exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+//    }
 
     testImplementation project(path: ':iceberg-api', configuration: 'testArtifacts')
   }

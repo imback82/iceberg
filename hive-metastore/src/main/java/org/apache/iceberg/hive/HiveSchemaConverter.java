@@ -118,8 +118,8 @@ class HiveSchemaConverter {
           case DECIMAL:
             DecimalTypeInfo decimalTypeInfo = (DecimalTypeInfo) typeInfo;
             return Types.DecimalType.of(decimalTypeInfo.precision(), decimalTypeInfo.scale());
-          case INTERVAL_YEAR_MONTH:
-          case INTERVAL_DAY_TIME:
+            //          case INTERVAL_YEAR_MONTH:
+            //          case INTERVAL_DAY_TIME:
           default:
             // special case for Timestamp with Local TZ which is only available in Hive3
             if ("TIMESTAMPLOCALTZ"

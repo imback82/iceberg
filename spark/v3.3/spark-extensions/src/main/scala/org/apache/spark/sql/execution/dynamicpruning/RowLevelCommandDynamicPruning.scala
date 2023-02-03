@@ -139,7 +139,8 @@ case class RowLevelCommandDynamicPruning(spark: SparkSession) extends Rule[Logic
 
     val buildQuery = Project(buildKeys, matchingRowsPlan)
     val dynamicPruningSubqueries = pruningKeys.zipWithIndex.map { case (key, index) =>
-      DynamicPruningSubquery(key, buildQuery, buildKeys, index, onlyInBroadcast = false)
+      DynamicPruningSubquery(key, buildQuery.output, buildKeys, index, onlyInBroadcast = false,
+        buildQueryId = 0, partitionPruning = false)
     }
     dynamicPruningSubqueries.reduce(And)
   }

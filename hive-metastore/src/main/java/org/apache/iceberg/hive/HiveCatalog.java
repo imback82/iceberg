@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
@@ -55,6 +54,8 @@ import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.util.LocationUtil;
+import org.apache.spark.sql.hive.client.HiveClient;
+import org.apache.spark.sql.hive.client.TableShim;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,7 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
   private String name;
   private Configuration conf;
   private FileIO fileIO;
-  private ClientPool<IMetaStoreClient, TException> clients;
+  private ClientPool<HiveClient, TException> clients;
   private boolean listAllTables = false;
   private Map<String, String> catalogProperties;
 
@@ -112,7 +113,7 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
     String database = namespace.level(0);
 
     try {
-      List<String> tableNames = clients.run(client -> client.getAllTables(database));
+      List<String> tableNames = null; // clients.run(client -> client.getAllTables(database));
       List<TableIdentifier> tableIdentifiers;
 
       if (listAllTables) {
@@ -121,8 +122,8 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
                 .map(t -> TableIdentifier.of(namespace, t))
                 .collect(Collectors.toList());
       } else {
-        List<Table> tableObjects =
-            clients.run(client -> client.getTableObjectsByName(database, tableNames));
+        List<Table> tableObjects = null;
+        // clients.run(client -> client.getTableObjectsByName(database, tableNames));
         tableIdentifiers =
             tableObjects.stream()
                 .filter(
@@ -143,16 +144,18 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
           tableIdentifiers);
       return tableIdentifiers;
 
-    } catch (UnknownDBException e) {
+    } catch (Throwable /* UnknownDBException */ e) {
       throw new NoSuchNamespaceException("Namespace does not exist: %s", namespace);
-
-    } catch (TException e) {
+    }
+    /*
+    catch (TException e) {
       throw new RuntimeException("Failed to list all tables under namespace " + namespace, e);
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted in call to listTables", e);
     }
+    */
   }
 
   @Override
@@ -226,16 +229,17 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
     String fromName = from.name();
 
     try {
-      Table table = clients.run(client -> client.getTable(fromDatabase, fromName));
+      TableShim table = clients.run(client -> client.getTableUsingMSC(fromDatabase, fromName));
       HiveTableOperations.validateTableIsIceberg(table, fullTableName(name, from));
 
-      table.setDbName(toDatabase);
-      table.setTableName(to.name());
+      //      table.setDbName(toDatabase);
+      //      table.setTableName(to.name());
 
       clients.run(
           client -> {
-            MetastoreUtil.alterTable(client, fromDatabase, fromName, table);
-            return null;
+            throw new TException("AlterTable Not implemented");
+            // MetastoreUtil.alterTable(client, fromDatabase, fromName, table);
+            // return null;
           });
 
       LOG.info("Renamed table from {}, to {}", from, to);
@@ -268,7 +272,7 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
     try {
       clients.run(
           client -> {
-            client.createDatabase(convertToDatabase(namespace, meta));
+            // client.createDatabase(convertToDatabase(namespace, meta));
             return null;
           });
 
@@ -298,23 +302,26 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
       return ImmutableList.of();
     }
     try {
-      List<Namespace> namespaces =
-          clients.run(IMetaStoreClient::getAllDatabases).stream()
+      List<Namespace> namespaces = null;
+      /*
+          clients.run(HiveClient::getAllDatabases).stream()
               .map(Namespace::of)
               .collect(Collectors.toList());
-
+      */
       LOG.debug("Listing namespace {} returned tables: {}", namespace, namespaces);
       return namespaces;
 
-    } catch (TException e) {
+    } catch (Throwable /* TException */ e) {
       throw new RuntimeException(
           "Failed to list all namespace: " + namespace + " in Hive Metastore", e);
-
-    } catch (InterruptedException e) {
+    }
+    /*
+    catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException(
           "Interrupted in call to getAllDatabases() " + namespace + " in Hive Metastore", e);
     }
+    */
   }
 
   @Override
@@ -326,11 +333,11 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
     try {
       clients.run(
           client -> {
-            client.dropDatabase(
-                namespace.level(0),
-                false /* deleteData */,
-                false /* ignoreUnknownDb */,
-                false /* cascade */);
+            //            client.dropDatabase(
+            //                namespace.level(0),
+            //                false /* deleteData */,
+            //                false /* ignoreUnknownDb */,
+            //                false /* cascade */);
             return null;
           });
 
@@ -388,7 +395,7 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
     try {
       clients.run(
           client -> {
-            client.alterDatabase(namespace.level(0), database);
+            // client.alterDatabase(namespace.level(0), database);
             return null;
           });
 
@@ -413,12 +420,15 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
     }
 
     try {
-      Database database = clients.run(client -> client.getDatabase(namespace.level(0)));
+      Database database = null; // clients.run(client -> client.getDatabase(namespace.level(0)));
       Map<String, String> metadata = convertToMetadata(database);
       LOG.debug("Loaded metadata for namespace {} found {}", namespace, metadata.keySet());
       return metadata;
-
-    } catch (NoSuchObjectException | UnknownDBException e) {
+    } catch (Throwable e) {
+      throw e;
+    }
+    /*
+    catch (NoSuchObjectException | UnknownDBException e) {
       throw new NoSuchNamespaceException(e, "Namespace does not exist: %s", namespace);
 
     } catch (TException e) {
@@ -430,6 +440,7 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
       throw new RuntimeException(
           "Interrupted in call to getDatabase(name) " + namespace + " in Hive Metastore", e);
     }
+    */
   }
 
   @Override
@@ -471,13 +482,17 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
 
     // Create a new location based on the namespace / database if it is set on database level
     try {
-      Database databaseData =
-          clients.run(client -> client.getDatabase(tableIdentifier.namespace().levels()[0]));
+      Database databaseData = null;
+      // clients.run(client -> client.getDatabase(tableIdentifier.namespace().levels()[0]));
       if (databaseData.getLocationUri() != null) {
         // If the database location is set use it as a base.
         return String.format("%s/%s", databaseData.getLocationUri(), tableIdentifier.name());
       }
+    } catch (Throwable e) {
+      throw e;
+    }
 
+    /*
     } catch (TException e) {
       throw new RuntimeException(
           String.format("Metastore operation failed for %s", tableIdentifier), e);
@@ -486,6 +501,7 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted during commit", e);
     }
+    */
 
     // Otherwise, stick to the {WAREHOUSE_DIR}/{DB_NAME}.db/{TABLE_NAME} path
     String databaseLocation = databaseLocation(tableIdentifier.namespace().levels()[0]);

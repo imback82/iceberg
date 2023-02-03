@@ -17,7 +17,7 @@
  * under the License.
  */
 
-String sparkVersion = '3.3.1'
+String sparkVersion = '3.3.1-SNAPSHOT'
 String sparkMajorVersion = '3.3'
 String scalaVersion = System.getProperty("scalaVersion") != null ? System.getProperty("scalaVersion") : System.getProperty("defaultScalaVersion")
 
@@ -61,15 +61,21 @@ project(":iceberg-spark:iceberg-spark-${sparkMajorVersion}_${scalaVersion}") {
 
     compileOnly "com.google.errorprone:error_prone_annotations"
     compileOnly "org.apache.avro:avro"
-    compileOnly("org.apache.spark:spark-hive_${scalaVersion}:${sparkVersion}") {
-      exclude group: 'org.apache.avro', module: 'avro'
-      exclude group: 'org.apache.arrow'
-      exclude group: 'org.apache.parquet'
-      // to make sure netty libs only come from project(':iceberg-arrow')
-      exclude group: 'io.netty', module: 'netty-buffer'
-      exclude group: 'io.netty', module: 'netty-common'
-      exclude group: 'org.roaringbitmap'
-    }
+    // New
+    compileOnly "com.esotericsoftware:kryo"
+    compileOnly "joda-time:joda-time:2.10.13"
+    compileOnly "com.google.code.findbugs:jsr305:3.0.0"
+    compileOnly files("/Users/terry.kim/jars/spark/scala-reflect-2.12.14.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/org.apache.hive__hive-common__2.3.9.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/org.apache.hive.shims__hive-shims-scheduler__2.3.9.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/org.apache.hadoop__hadoop-client-api__3.3.2-databricks.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-tags_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-sql_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-unsafe_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-core_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-catalyst_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-hive_2.12-3.3.1-SNAPSHOT.jar")
+    testImplementation 'org.apache.thrift:libthrift:0.12.0'
 
     implementation("org.apache.parquet:parquet-column")
     implementation("org.apache.parquet:parquet-hadoop")
@@ -143,16 +149,29 @@ project(":iceberg-spark:iceberg-spark-extensions-${sparkMajorVersion}_${scalaVer
     compileOnly project(':iceberg-core')
     compileOnly project(':iceberg-common')
     compileOnly project(":iceberg-spark:iceberg-spark-${sparkMajorVersion}_${scalaVersion}")
-    compileOnly("org.apache.spark:spark-hive_${scalaVersion}:${sparkVersion}") {
-      exclude group: 'org.apache.avro', module: 'avro'
-      exclude group: 'org.apache.arrow'
-      exclude group: 'org.apache.parquet'
-      // to make sure netty libs only come from project(':iceberg-arrow')
-      exclude group: 'io.netty', module: 'netty-buffer'
-      exclude group: 'io.netty', module: 'netty-common'
-      exclude group: 'org.roaringbitmap'
-    }
 
+    compileOnly "com.esotericsoftware:kryo"
+    testImplementation "joda-time:joda-time:2.10.13"
+    testImplementation "commons-collections:commons-collections:3.2.2"
+    testImplementation files("/Users/terry.kim/jars/spark/scala-reflect-2.12.14.jar")
+    testImplementation files("/Users/terry.kim/jars/spark/org.apache.hive__hive-common__2.3.9.jar")
+    testImplementation files("/Users/terry.kim/jars/spark/org.apache.hadoop__hadoop-client-api__3.3.2-databricks.jar")
+    testImplementation 'org.apache.thrift:libthrift:0.12.0'
+    compileOnly files("/Users/terry.kim/jars/spark/spark-tags_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-sql_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-unsafe_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-core_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-catalyst_2.12-3.3.1-SNAPSHOT.jar")
+    compileOnly files("/Users/terry.kim/jars/spark/spark-hive_2.12-3.3.1-SNAPSHOT.jar")
+//    compileOnly files("/Users/terry.kim/jars/spark/spark-hive_2.12-3.3.1-SNAPSHOT.jar") {
+//      exclude group: 'org.apache.avro', module: 'avro'
+//      exclude group: 'org.apache.arrow'
+//      exclude group: 'org.apache.parquet'
+//      // to make sure netty libs only come from project(':iceberg-arrow')
+//      exclude group: 'io.netty', module: 'netty-buffer'
+//      exclude group: 'io.netty', module: 'netty-common'
+//      exclude group: 'org.roaringbitmap'
+//    }
     testImplementation project(path: ':iceberg-data')
     testImplementation project(path: ':iceberg-parquet')
     testImplementation project(path: ':iceberg-hive-metastore')
@@ -222,8 +241,39 @@ project(":iceberg-spark:iceberg-spark-runtime-${sparkMajorVersion}_${scalaVersio
       exclude group: 'com.google.code.findbugs', module: 'jsr305'
     }
 
+    integrationImplementation "org.apache.commons:commons-collections4:4.1"
+    integrationImplementation "com.esotericsoftware:kryo"
+    integrationImplementation "com.twitter:chill_2.12:0.10.0"
     integrationImplementation "org.scala-lang.modules:scala-collection-compat_${scalaVersion}"
-    integrationImplementation "org.apache.spark:spark-hive_${scalaVersion}:${sparkVersion}"
+    integrationImplementation 'org.apache.thrift:libthrift:0.12.0'
+    integrationImplementation 'org.apache.hive:hive-metastore:2.3.9'
+    integrationImplementation 'org.apache.hive:hive-exec::core'
+    integrationImplementation 'org.eclipse.jetty:jetty-io:9.4.46.v20220331'
+    integrationImplementation 'org.eclipse.jetty:jetty-util:9.4.46.v20220331'
+    // integrationImplementation 'org.eclipse.jetty.aggregate:jetty-all:7.6.0.v20120127'
+    integrationImplementation files("/Users/terry.kim/jars/spark/org.apache.hadoop__hadoop-client-runtime__3.3.2.jar")
+    integrationImplementation 'io.netty:netty-all:4.1.74.Final'
+    // integrationImplementation 'io.netty:netty-buffer:4.1.74.Final'
+//    integrationImplementation files("/Users/terry.kim/jars/spark/netty-common-4.1.75.Final.jar")
+//    integrationImplementation files("/Users/terry.kim/jars/spark/netty-buffer-4.1.75.Final.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/py4j_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/commons-lang3-3.12.0.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-kvstore_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/json4s-core_2.12-3.7.0-M11.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/scala-xml_2.12-1.2.0.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-launcher_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-network-shuffle_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/scala-reflect-2.12.14.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/jackson-module-scala_2.12-2.13.3.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/org.apache.hive__hive-common__2.3.9.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/org.apache.hadoop__hadoop-client-api__3.3.2-databricks.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-tags_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-network-common_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-sql_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-unsafe_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-core_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-catalyst_2.12-3.3.1-SNAPSHOT.jar")
+    integrationImplementation files("/Users/terry.kim/jars/spark/spark-hive_2.12-3.3.1-SNAPSHOT.jar")
     integrationImplementation 'org.junit.vintage:junit-vintage-engine'
     integrationImplementation 'org.slf4j:slf4j-simple'
     integrationImplementation project(path: ':iceberg-api', configuration: 'testArtifacts')

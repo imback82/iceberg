@@ -38,6 +38,7 @@ public abstract class BaseMetastoreCatalog implements Catalog {
 
   @Override
   public Table loadTable(TableIdentifier identifier) {
+    LOG.warn("ICEBERG!!! loadTable() 222");
     Table result;
     if (isValidIdentifier(identifier)) {
       TableOperations ops = newTableOps(identifier);

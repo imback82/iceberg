@@ -20,32 +20,37 @@ package org.apache.iceberg.hive;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaHookLoader;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.iceberg.BaseMetastoreCatalog;
 import org.apache.iceberg.ClientPoolImpl;
-import org.apache.iceberg.common.DynMethods;
 import org.apache.iceberg.relocated.com.google.common.annotations.VisibleForTesting;
+import org.apache.spark.SparkConf;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.hive.IcebergHiveUtils;
+import org.apache.spark.sql.hive.client.HiveClient;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scala.collection.immutable.Set;
 
-public class HiveClientPool extends ClientPoolImpl<IMetaStoreClient, TException> {
+public class HiveClientPool extends ClientPoolImpl<HiveClient, TException> {
+  private static final Logger LOG = LoggerFactory.getLogger(BaseMetastoreCatalog.class);
 
-  private static final DynMethods.StaticMethod GET_CLIENT =
-      DynMethods.builder("getProxy")
-          .impl(
-              RetryingMetaStoreClient.class,
-              HiveConf.class,
-              HiveMetaHookLoader.class,
-              String.class) // Hive 1 and 2
-          .impl(
-              RetryingMetaStoreClient.class,
-              Configuration.class,
-              HiveMetaHookLoader.class,
-              String.class) // Hive 3
-          .buildStatic();
+  //  private static final DynMethods.StaticMethod GET_CLIENT =
+  //      DynMethods.builder("getProxy")
+  //          // .loader(IcebergHiveUtils.getClassLoader())
+  //          .impl(
+  //              RetryingMetaStoreClient.class,
+  //              HiveConf.class,
+  //              HiveMetaHookLoader.class,
+  //              String.class) // Hive 1 and 2
+  //          .impl(
+  //              RetryingMetaStoreClient.class,
+  //              Configuration.class,
+  //              HiveMetaHookLoader.class,
+  //              String.class) // Hive 3
+  //          .buildStatic();
 
   private final HiveConf hiveConf;
 
@@ -57,40 +62,63 @@ public class HiveClientPool extends ClientPoolImpl<IMetaStoreClient, TException>
   }
 
   @Override
-  protected IMetaStoreClient newClient() {
+  protected HiveClient newClient() {
+    SparkSession session = SparkSession.active();
+    SparkConf sparkConf = session.sharedState().conf();
+    Configuration hadoopConf = session.sharedState().hadoopConf();
+    // ClassLoader original = Thread.currentThread().getContextClassLoader();
+    // ClassLoader loader = IcebergHiveUtils.getClassLoader(sparkConf, hadoopConf);
+    // Thread.currentThread().setContextClassLoader(loader);
+    HiveClient hc = IcebergHiveUtils.newClientForMetadata(sparkConf, hadoopConf);
+    // IMetaStoreClientShim shim = hc.metaStoreClientShim();
+    // Thread.currentThread().setContextClassLoader(original);
     try {
-      try {
-        return GET_CLIENT.invoke(
-            hiveConf, (HiveMetaHookLoader) tbl -> null, HiveMetaStoreClient.class.getName());
-      } catch (RuntimeException e) {
-        // any MetaException would be wrapped into RuntimeException during reflection, so let's
-        // double-check type here
-        if (e.getCause() instanceof MetaException) {
-          throw (MetaException) e.getCause();
-        }
-        throw e;
-      }
-    } catch (MetaException e) {
-      throw new RuntimeMetaException(e, "Failed to connect to Hive Metastore");
+      LOG.warn("ICEBERG!!!: Listing tables");
+      String str = hc.getTablesByName("default", new Set.Set1<>("a").toSeq()).mkString();
+      LOG.warn("ICEBERG!!!: Listed tables: " + str);
+      // shim.getTables("default", ".*");
     } catch (Throwable t) {
-      if (t.getMessage().contains("Another instance of Derby may have already booted")) {
-        throw new RuntimeMetaException(
-            t,
-            "Failed to start an embedded metastore because embedded "
-                + "Derby supports only one client at a time. To fix this, use a metastore that supports "
-                + "multiple clients.");
-      }
-
-      throw new RuntimeMetaException(t, "Failed to connect to Hive Metastore");
+      throw new RuntimeMetaException(t, "");
     }
+
+    return hc;
+    // return shim;
+
+    //    try {
+    //      try {
+    //        return GET_CLIENT.invoke(
+    //            hiveConf, (HiveMetaHookLoader) tbl -> null, HiveMetaStoreClient.class.getName());
+    //      } catch (RuntimeException e) {
+    //        // any MetaException would be wrapped into RuntimeException during reflection, so
+    // let's
+    //        // double-check type here
+    //        if (e.getCause() instanceof MetaException) {
+    //          throw (MetaException) e.getCause();
+    //        }
+    //        throw e;
+    //      }
+    //    } catch (MetaException e) {
+    //      throw new RuntimeMetaException(e, "Failed to connect to Hive Metastore");
+    //    } catch (Throwable t) {
+    //      if (t.getMessage().contains("Another instance of Derby may have already booted")) {
+    //        throw new RuntimeMetaException(
+    //            t,
+    //            "Failed to start an embedded metastore because embedded "
+    //                + "Derby supports only one client at a time. To fix this, use a metastore that
+    // supports "
+    //                + "multiple clients.");
+    //      }
+    //
+    //      throw new RuntimeMetaException(t, "Failed to connect to Hive Metastore");
+    //    }
   }
 
   @Override
-  protected IMetaStoreClient reconnect(IMetaStoreClient client) {
+  protected HiveClient reconnect(HiveClient client) {
     try {
-      client.close();
-      client.reconnect();
-    } catch (MetaException e) {
+      //      client.close();
+      //      client.reconnect();
+    } catch (Throwable e) {
       throw new RuntimeMetaException(e, "Failed to reconnect to Hive Metastore");
     }
     return client;
@@ -106,8 +134,8 @@ public class HiveClientPool extends ClientPoolImpl<IMetaStoreClient, TException>
   }
 
   @Override
-  protected void close(IMetaStoreClient client) {
-    client.close();
+  protected void close(HiveClient client) {
+    // client.close();
   }
 
   @VisibleForTesting

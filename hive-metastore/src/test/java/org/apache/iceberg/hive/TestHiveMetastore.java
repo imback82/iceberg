@@ -186,7 +186,7 @@ public class TestHiveMetastore {
       executorService.shutdown();
     }
     if (baseHandler != null) {
-      baseHandler.shutdown();
+      // baseHandler.shutdown();
     }
     METASTORE_THREADS_SHUTDOWN.invoke();
   }
@@ -202,24 +202,24 @@ public class TestHiveMetastore {
 
   public void reset() throws Exception {
     if (clientPool != null) {
-      for (String dbName : clientPool.run(client -> client.getAllDatabases())) {
-        for (String tblName : clientPool.run(client -> client.getAllTables(dbName))) {
-          clientPool.run(
-              client -> {
-                client.dropTable(dbName, tblName, true, true, true);
-                return null;
-              });
-        }
-
-        if (!DEFAULT_DATABASE_NAME.equals(dbName)) {
-          // Drop cascade, functions dropped by cascade
-          clientPool.run(
-              client -> {
-                client.dropDatabase(dbName, true, true, true);
-                return null;
-              });
-        }
-      }
+      //      for (String dbName : clientPool.run(client -> client.getAllDatabases())) {
+      //        for (String tblName : clientPool.run(client -> client.getAllTables(dbName))) {
+      //          clientPool.run(
+      //              client -> {
+      //                client.dropTable(dbName, tblName, true, true);
+      //                return null;
+      //              });
+      //        }
+      //
+      //        if (!DEFAULT_DATABASE_NAME.equals(dbName)) {
+      //          // Drop cascade, functions dropped by cascade
+      //          clientPool.run(
+      //              client -> {
+      //                client.dropDatabase(dbName, true, true, true);
+      //                return null;
+      //              });
+      //        }
+      //      }
     }
 
     Path warehouseRoot = new Path(HIVE_LOCAL_DIR.getAbsolutePath());
@@ -233,7 +233,8 @@ public class TestHiveMetastore {
   }
 
   public Table getTable(String dbName, String tableName) throws TException, InterruptedException {
-    return clientPool.run(client -> client.getTable(dbName, tableName));
+    return null;
+    // return clientPool.run(client -> client.getTable(dbName, tableName));
   }
 
   public Table getTable(TableIdentifier identifier) throws TException, InterruptedException {
@@ -268,8 +269,8 @@ public class TestHiveMetastore {
     conf.set(HiveConf.ConfVars.METASTORE_DISALLOW_INCOMPATIBLE_COL_TYPE_CHANGES.varname, "false");
     conf.set("iceberg.hive.client-pool-size", "2");
     // Setting this to avoid thrift exception during running Iceberg tests outside Iceberg.
-    conf.set(
-        HiveConf.ConfVars.HIVE_IN_TEST.varname, HiveConf.ConfVars.HIVE_IN_TEST.getDefaultValue());
+    conf.set(HiveConf.ConfVars.HIVE_IN_TEST.varname, "false");
+    // HiveConf.ConfVars.HIVE_IN_TEST.getDefaultValue());
   }
 
   private static void setupMetastoreDB(String dbURL) throws SQLException, IOException {

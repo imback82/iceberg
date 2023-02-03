@@ -18,12 +18,8 @@
  */
 package org.apache.iceberg.hive;
 
-import org.apache.hadoop.hive.common.StatsSetupConst;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.iceberg.common.DynMethods;
-import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
+import org.apache.spark.sql.hive.client.HiveClient;
 
 public class MetastoreUtil {
 
@@ -32,24 +28,24 @@ public class MetastoreUtil {
   private static final String HIVE3_UNIQUE_CLASS =
       "org.apache.hadoop.hive.serde2.io.DateWritableV2";
 
-  private static final DynMethods.UnboundMethod ALTER_TABLE =
-      DynMethods.builder("alter_table")
-          .impl(
-              IMetaStoreClient.class,
-              "alter_table_with_environmentContext",
-              String.class,
-              String.class,
-              Table.class,
-              EnvironmentContext.class)
-          .impl(
-              IMetaStoreClient.class,
-              "alter_table",
-              String.class,
-              String.class,
-              Table.class,
-              EnvironmentContext.class)
-          .impl(IMetaStoreClient.class, "alter_table", String.class, String.class, Table.class)
-          .build();
+  //  private static final DynMethods.UnboundMethod ALTER_TABLE =
+  //      DynMethods.builder("alter_table")
+  //          .impl(
+  //              IMetaStoreClient.class,
+  //              "alter_table_with_environmentContext",
+  //              String.class,
+  //              String.class,
+  //              Table.class,
+  //              EnvironmentContext.class)
+  //          .impl(
+  //              IMetaStoreClient.class,
+  //              "alter_table",
+  //              String.class,
+  //              String.class,
+  //              Table.class,
+  //              EnvironmentContext.class)
+  //          .impl(IMetaStoreClient.class, "alter_table", String.class, String.class, Table.class)
+  //          .build();
 
   private static final boolean HIVE3_PRESENT_ON_CLASSPATH = detectHive3();
 
@@ -65,11 +61,12 @@ public class MetastoreUtil {
    * be used that turns off stats updates to avoid recursive listing.
    */
   public static void alterTable(
-      IMetaStoreClient client, String databaseName, String tblName, Table table) {
-    EnvironmentContext envContext =
-        new EnvironmentContext(
-            ImmutableMap.of(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE));
-    ALTER_TABLE.invoke(client, databaseName, tblName, table, envContext);
+      HiveClient client, String databaseName, String tblName, Table table) {
+    // client.alter_table(databaseName, tblName, table);
+    //    EnvironmentContext envContext =
+    //        new EnvironmentContext(
+    //            ImmutableMap.of(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE));
+    //    ALTER_TABLE.invoke(client, databaseName, tblName, table, envContext);
   }
 
   private static boolean detectHive3() {

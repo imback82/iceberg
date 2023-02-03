@@ -27,7 +27,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.iceberg.NullOrder;
 import org.apache.iceberg.PartitionSpec;
@@ -82,6 +81,7 @@ import org.apache.spark.sql.connector.expressions.Transform;
 import org.apache.spark.sql.execution.datasources.FileStatusCache;
 import org.apache.spark.sql.execution.datasources.InMemoryFileIndex;
 import org.apache.spark.sql.execution.datasources.PartitionDirectory;
+import org.apache.spark.sql.execution.datasources.SerializableFileStatus;
 import org.apache.spark.sql.types.IntegerType;
 import org.apache.spark.sql.types.LongType;
 import org.apache.spark.sql.types.StructType;
@@ -865,7 +865,7 @@ public class Spark3Util {
                         values.put(field.name(), String.valueOf(value));
                       });
 
-              FileStatus fileStatus =
+              SerializableFileStatus fileStatus =
                   JavaConverters.seqAsJavaListConverter(partition.files()).asJava().get(0);
 
               return new SparkPartition(
